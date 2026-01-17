@@ -3,111 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>08 Takvim - Admin Pro</title>
+    <title>08 Takvim - Yönetim Paneli V3</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --green: #22c55e; --dark: #022c22; --bg: #021f10; --accent: #facc15; --red: #ef4444; --blue: #3b82f6; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: radial-gradient(circle at top, #064e3b 0%, #021f10 100%); color: #dcfce7; min-height: 100vh; overflow-x: hidden; }
-        #auth { position: fixed; inset: 0; background: var(--dark); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 9999; }
-        #app { display: none; padding: 15px; max-width: 600px; margin: auto; padding-bottom: 100px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(20, 83, 45, 0.4); padding: 12px; border-radius: 20px; border: 1px solid rgba(34, 197, 94, 0.3); backdrop-filter: blur(10px); }
-        .pfp { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--green); object-fit: cover; cursor: pointer; }
-        .nav-tabs { display: flex; gap: 8px; margin: 15px 0; }
-        .nav-tab { flex: 1; padding: 12px; text-align: center; background: rgba(0,0,0,0.2); border-radius: 15px; cursor: pointer; font-size: 11px; }
+        :root { --green: #22c55e; --dark: #022c22; --bg: #021f10; --accent: #facc15; --red: #ef4444; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; background: #021f10; color: #dcfce7; min-height: 100vh; }
+        
+        /* Auth */
+        #auth { position: fixed; inset: 0; background: var(--dark); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+        
+        /* App Layout */
+        #app { display: none; padding: 10px; max-width: 600px; margin: auto; }
+        
+        /* Room Tabs (Üst Oda Listesi) */
+        .room-bar { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
+        .room-tab { padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; white-space: nowrap; font-size: 13px; border: 1px solid transparent; }
+        .room-tab.active { background: var(--green); color: var(--dark); font-weight: bold; border-color: white; }
+
+        /* Navigation */
+        .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .nav-tab { flex: 1; padding: 12px; text-align: center; background: rgba(0,0,0,0.3); border-radius: 10px; cursor: pointer; font-size: 12px; }
         .nav-tab.active { background: var(--green); color: var(--dark); font-weight: bold; }
+
         .section { display: none; }
         .section.active { display: block; }
-        input, button { padding: 12px; border-radius: 12px; border: none; outline: none; width: 100%; margin-bottom: 8px; }
-        input { background: rgba(0,0,0,0.3); color: white; border: 1px solid #14532d; }
+
+        /* UI Elements */
+        input, button { padding: 12px; border-radius: 10px; border: none; width: 100%; margin-bottom: 8px; outline: none; }
+        input { background: rgba(0,0,0,0.5); color: white; border: 1px solid #14532d; }
         button { font-weight: bold; cursor: pointer; }
-        .member-card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        #chat_box { height: 350px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px; border: 1px solid rgba(34,197,94,0.1); }
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .day { background: rgba(2, 44, 34, 0.6); padding: 8px; border-radius: 8px; min-height: 60px; text-align: center; cursor: pointer; border: 1px solid #14532d; font-size: 12px; position: relative; }
-        .day.selected { border-color: white; background: rgba(34, 197, 94, 0.2); }
-        .admin-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; border: 1px solid var(--accent); margin-bottom: 20px; }
-        .badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
-        .badge-red { background: var(--red); color: white; }
-        .badge-yellow { background: var(--accent); color: black; }
+        
+        /* Member Card */
+        .member-card { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
+        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; }
+        .badge-admin { background: var(--accent); color: black; }
+        .badge-mute { background: var(--red); color: white; }
+
+        /* Calendar */
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .day { background: rgba(20, 83, 45, 0.4); aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; font-size: 12px; border: 1px solid transparent; }
+        .day.selected { border-color: white; background: var(--green); color: var(--dark); }
     </style>
 </head>
 <body>
 
 <div id="auth">
-    <h1 style="color:var(--green)">08 TAKVİM PRO</h1>
-    <div style="width:260px">
+    <h2 style="color:var(--green)">08 TAKVİM V3</h2>
+    <div style="width:280px">
         <input id="u_name" placeholder="Kullanıcı Adı">
         <input id="u_pass" type="password" placeholder="Şifre">
-        <button onclick="handleAuth('login')" style="background:var(--green); color:var(--dark)">GİRİŞ</button>
-        <button onclick="handleAuth('reg')" style="background:transparent; color:var(--green); border:1px solid var(--green)">KAYIT</button>
+        <button onclick="handleAuth('login')" style="background:var(--green); color:var(--dark)">GİRİŞ YAP</button>
+        <button onclick="handleAuth('reg')" style="background:transparent; color:var(--green); border:1px solid var(--green)">KAYIT OL</button>
     </div>
 </div>
 
 <div id="app">
-    <div class="top-bar">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <img id="user_pfp" class="pfp" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" onclick="updateProfile()">
-            <div><b id="welcome_msg">...</b><br><small id="my_motto_display" style="color:var(--accent)"></small></div>
-        </div>
-        <button onclick="logout()" style="background:var(--red); color:white; width:auto; padding:5px 10px; font-size:10px;">ÇIKIŞ</button>
-    </div>
+    <div id="room_bar" class="room-bar"></div>
 
     <div class="nav-tabs">
         <div class="nav-tab active" onclick="switchSec('cal_sec', this)">TAKVİM</div>
-        <div class="nav-tab" onclick="switchSec('chat_sec', this)">SOHBET</div>
         <div class="nav-tab" onclick="switchSec('room_sec', this)">YÖNETİM</div>
     </div>
 
     <div id="cal_sec" class="section active">
-        <div id="room_bar" class="room-bar" style="display:flex; gap:5px; overflow-x:auto; margin-bottom:10px;"></div>
         <div id="calendar" class="calendar"></div>
-        <div id="task_area" style="margin-top:20px; display:none;">
-            <h4 id="sel_date_text" style="color:var(--accent)">Seçili Gün</h4>
-            <div id="task_input_container">
-                <input id="t_input" placeholder="Notunuz...">
-                <input id="t_days" type="number" value="1" min="1" max="31" style="width:80px" placeholder="Gün">
+        <div id="task_area" style="margin-top:15px; display:none; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px;">
+            <h4 id="sel_date_label" style="margin-top:0; color:var(--accent)">...</h4>
+            <div id="write_controls">
+                <input id="t_input" placeholder="Ne planlıyorsun?">
                 <button onclick="saveTask()" style="background:var(--green); color:var(--dark)">EKLE</button>
             </div>
             <div id="t_list" style="margin-top:10px;"></div>
         </div>
     </div>
 
-    <div id="chat_sec" class="section">
-        <div id="chat_box"></div>
-        <div style="display:flex; gap:5px; margin-top:10px;">
-            <input id="c_input" placeholder="Mesaj..." style="flex:1; margin:0">
-            <button onclick="sendMsg()" style="background:var(--green); width:50px; margin:0">➤</button>
-        </div>
-    </div>
-
     <div id="room_sec" class="section">
-        <div id="admin_panel" class="admin-box" style="display:none">
-            <h3 style="color:var(--accent); margin-top:0">Oda Yönetimi</h3>
-            <small>Davet Kodu Ayarları:</small>
-            <div style="display:flex; gap:5px; margin:10px 0;">
-                <input id="inv_limit" type="number" placeholder="Kişi Limiti" style="margin:0">
-                <input id="inv_hours" type="number" placeholder="Saat (Örn: 24)" style="margin:0">
+        <div id="admin_tools" style="display:none; border:1px solid var(--accent); padding:15px; border-radius:15px; margin-bottom:15px;">
+            <h4 style="margin:0 0 10px 0; color:var(--accent)">ODA SAHİBİ PANELİ</h4>
+            <small>Davet Kodu (Kişi Limiti / Saat):</small>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <input id="inv_lim" type="number" value="5" style="margin:0">
+                <input id="inv_hrs" type="number" value="24" style="margin:0">
+                <button onclick="createInvite()" style="background:var(--green); width:auto; margin:0">ÜRET</button>
             </div>
-            <button onclick="generateInvite()" style="background:var(--blue); color:white">YENİ DAVET KODU ÜRET</button>
-            <p id="invite_result" style="font-size:12px; word-break:break-all;"></p>
-            <hr style="opacity:0.2">
-            <button onclick="deleteRoom()" style="background:var(--red); color:white">ODAYI TAMAMEN SİL</button>
+            <p id="inv_display" style="font-size:12px; background:rgba(0,0,0,0.3); padding:8px; border-radius:5px; margin-top:10px; border:1px dashed var(--accent)"></p>
         </div>
 
-        <h4>Oda Katılım</h4>
-        <input id="r_code" placeholder="Davet Kodu Girin">
-        <button onclick="joinRoom()" style="background:var(--accent); color:black">ODAYA KATIL</button>
-        <input id="r_name" placeholder="Oda Adı (Yeni Oda İçin)">
-        <button onclick="createRoom()" style="background:var(--green); color:var(--dark)">YENİ ODA KUR</button>
+        <h4>Odaya Katıl</h4>
+        <input id="r_invite" placeholder="Davet Kodunu Yapıştır">
+        <button onclick="joinWithInvite()" style="background:var(--accent)">KATIL</button>
 
-        <h4>Üye Listesi</h4>
+        <h4>Yeni Oda Kur</h4>
+        <input id="r_new_name" placeholder="Oda İsmi">
+        <button onclick="createNewRoom()" style="background:var(--green)">KUR</button>
+
+        <h4>Üyeler ve Yetkiler</h4>
         <div id="member_list"></div>
+        
+        <button onclick="logout()" style="background:var(--red); color:white; margin-top:20px;">OTURUMU KAPAT</button>
     </div>
 </div>
-
-<input type="file" id="pfp_in" style="display:none" accept="image/*" onchange="uploadPfp()">
 
 <script>
     const firebaseConfig = {
@@ -122,221 +119,170 @@
     const db = firebase.firestore();
 
     let currentUser = localStorage.getItem('08_u') || null;
-    let currentRoom = null, selectedDay = null, chatSub = null;
-    let isAdmin = false, canWrite = true;
+    let currentRoomId = null;
+    let selectedDay = null;
 
     async function handleAuth(type) {
         const u = u_name.value.trim().toLowerCase(), p = u_pass.value;
-        if(!u || !p) return alert("Eksik bilgi!");
+        if(!u || !p) return alert("Boş bırakma!");
         const ref = db.collection("users").doc(u);
         const doc = await ref.get();
         if(type === 'reg') {
-            if(doc.exists) return alert("Bu isim alınmış!");
-            await ref.set({ pass:p, rooms:[], pfp:"", motto:"Yeni Üye" });
+            if(doc.exists) return alert("Bu isim dolu!");
+            await ref.set({ pass: p, rooms: [] });
         } else {
-            if(!doc.exists || doc.data().pass !== p) return alert("Hatalı giriş!");
+            if(!doc.exists || doc.data().pass !== p) return alert("Hatalı!");
         }
         currentUser = u; localStorage.setItem('08_u', u); init();
     }
 
     async function init() {
         auth.style.display="none"; app.style.display="block";
-        welcome_msg.innerText = currentUser.toUpperCase();
         const uDoc = await db.collection("users").doc(currentUser).get();
-        if(uDoc.data().pfp) user_pfp.src = uDoc.data().pfp;
-        my_motto_display.innerText = uDoc.data().motto;
-        if(uDoc.data().rooms.length > 0) {
-            currentRoom = uDoc.data().rooms[0];
-            loadRooms();
+        const rooms = uDoc.data().rooms || [];
+        if(rooms.length > 0) {
+            currentRoomId = rooms[0];
+            renderRoomTabs(rooms);
+        } else {
+            switchSec('room_sec', document.querySelectorAll('.nav-tab')[1]);
         }
     }
 
-    async function loadRooms() {
-        const u = await db.collection("users").doc(currentUser).get();
+    async function renderRoomTabs(roomIds) {
         room_bar.innerHTML = "";
-        u.data().rooms.forEach(rid => {
-            const btn = document.createElement("div");
-            btn.className = `room-tab ${currentRoom === rid ? 'active' : ''}`;
-            btn.innerText = rid.split('-')[0];
-            btn.onclick = () => { currentRoom = rid; loadRooms(); };
-            room_bar.appendChild(btn);
-        });
-        checkPerms(); renderCal(); startChat();
-    }
-
-    async function checkPerms() {
-        if(!currentRoom) return;
-        const r = await db.collection("rooms").doc(currentRoom).get();
-        const data = r.data();
-        isAdmin = data.admin === currentUser;
-        
-        // Yazma izni kontrolü (ReadOnly listesinde mi?)
-        const readOnlyUsers = data.readOnlyUsers || [];
-        canWrite = !readOnlyUsers.includes(currentUser);
-        task_input_container.style.opacity = canWrite ? "1" : "0.3";
-        task_input_container.style.pointerEvents = canWrite ? "all" : "none";
-
-        admin_panel.style.display = isAdmin ? "block" : "none";
-        loadMembers();
-    }
-
-    async function generateInvite() {
-        const limit = parseInt(inv_limit.value) || 99;
-        const hours = parseInt(inv_hours.value) || 24;
-        const code = Math.random().toString(36).substring(2,8).toUpperCase();
-        const expiry = Date.now() + (hours * 3600000);
-
-        await db.collection("rooms").doc(currentRoom).collection("invites").doc(code).set({
-            limit: limit, used: 0, expiry: expiry
-        });
-        invite_result.innerText = `Kod: ${code} (${limit} kişi / ${hours} saat)`;
-    }
-
-    async function joinRoom() {
-        const code = r_code.value.trim().toUpperCase();
-        const rooms = await db.collectionGroup("invites").get();
-        let targetRoom = null;
-        
-        for(let doc of rooms.docs) {
-            if(doc.id === code) {
-                const data = doc.data();
-                if(data.used >= data.limit) return alert("Kod limiti dolmuş!");
-                if(Date.now() > data.expiry) return alert("Kod süresi dolmuş!");
-                targetRoom = doc.ref.parent.parent.id;
-                
-                // Ban kontrolü
-                const rSnap = await doc.ref.parent.parent.get();
-                if((rSnap.data().bannedUsers || []).includes(currentUser)) {
-                    return alert("Bu odadan banlandığınız için giremezsiniz!");
-                }
-
-                await doc.ref.update({ used: data.used + 1 });
-                break;
+        for(let id of roomIds) {
+            const rDoc = await db.collection("rooms").doc(id).get();
+            if(rDoc.exists) {
+                const tab = document.createElement("div");
+                tab.className = `room-tab ${currentRoomId === id ? 'active' : ''}`;
+                tab.innerText = rDoc.data().name;
+                tab.onclick = () => { currentRoomId = id; renderRoomTabs(roomIds); };
+                room_bar.appendChild(tab);
             }
         }
-
-        if(targetRoom) {
-            await db.collection("users").doc(currentUser).update({
-                rooms: firebase.firestore.FieldValue.arrayUnion(targetRoom)
-            });
-            currentRoom = targetRoom; loadRooms();
-        } else alert("Geçersiz kod!");
+        refreshData();
     }
 
-    async function loadMembers() {
-        const rSnap = await db.collection("rooms").doc(currentRoom).get();
-        const data = rSnap.data();
-        const members = await db.collection("users").where("rooms", "array-contains", currentRoom).get();
-        member_list.innerHTML = "";
+    async function refreshData() {
+        if(!currentRoomId) return;
+        const rDoc = await db.collection("rooms").doc(currentRoomId).get();
+        const data = rDoc.data();
         
-        members.forEach(m => {
-            const mid = m.id;
-            const isTargetAdmin = data.admin === mid;
-            const isTargetMuted = (data.readOnlyUsers || []).includes(mid);
+        // Admin mi?
+        const isAdmin = data.owner === currentUser;
+        admin_tools.style.display = isAdmin ? "block" : "none";
+
+        // Yazma yetkisi?
+        const isMuted = (data.mutes || []).includes(currentUser);
+        write_controls.style.display = isMuted ? "none" : "block";
+
+        renderCalendar();
+        loadMembers(data);
+    }
+
+    function renderCalendar() {
+        calendar.innerHTML = "";
+        for(let i=1; i<=31; i++) {
+            const d = document.createElement("div");
+            d.className = `day ${selectedDay === i ? 'selected' : ''}`;
+            d.innerText = i;
+            d.onclick = () => { selectedDay = i; sel_date_label.innerText = i + " Ocak 2026"; task_area.style.display="block"; loadTasks(); renderCalendar(); };
+            calendar.appendChild(d);
+        }
+    }
+
+    async function loadTasks() {
+        const snap = await db.collection("tasks").where("roomId","==",currentRoomId).where("day","==",selectedDay).get();
+        t_list.innerHTML = "";
+        snap.forEach(doc => {
+            t_list.innerHTML += `<div style="font-size:13px; padding:5px; border-bottom:1px solid rgba(255,255,255,0.1)"><b>${doc.data().user}:</b> ${doc.data().txt}</div>`;
+        });
+    }
+
+    async function saveTask() {
+        const txt = t_input.value.trim();
+        if(!txt || !selectedDay) return;
+        await db.collection("tasks").add({ roomId: currentRoomId, user: currentUser, day: selectedDay, txt: txt, time: Date.now() });
+        t_input.value = ""; loadTasks();
+    }
+
+    async function loadMembers(roomData) {
+        const membersSnap = await db.collection("users").where("rooms", "array-contains", currentRoomId).get();
+        member_list.innerHTML = "";
+        membersSnap.forEach(doc => {
+            const uid = doc.id;
+            const isOwner = roomData.owner === uid;
+            const isMuted = (roomData.mutes || []).includes(uid);
             
-            let adminBtns = "";
-            if(isAdmin && mid !== currentUser) {
-                adminBtns = `
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="toggleWrite('${mid}', ${isTargetMuted})" style="background:gray; font-size:9px; width:auto; padding:5px;">${isTargetMuted?'Aç':'Sustur'}</button>
-                        <button onclick="kickUser('${mid}', false)" style="background:orange; font-size:9px; width:auto; padding:5px;">At</button>
-                        <button onclick="kickUser('${mid}', true)" style="background:red; font-size:9px; width:auto; padding:5px;">BAN</button>
+            let actions = "";
+            if(currentUser === roomData.owner && uid !== currentUser) {
+                actions = `
+                    <div style="display:flex; gap:4px;">
+                        <button onclick="toggleMute('${uid}', ${isMuted})" style="background:gray; width:auto; padding:4px 8px; font-size:10px;">Mute</button>
+                        <button onclick="kickUser('${uid}', false)" style="background:orange; width:auto; padding:4px 8px; font-size:10px;">At</button>
+                        <button onclick="kickUser('${uid}', true)" style="background:red; width:auto; padding:4px 8px; font-size:10px;">BAN</button>
                     </div>
                 `;
             }
 
             member_list.innerHTML += `
                 <div class="member-card">
-                    <span>${mid} ${isTargetAdmin?'<span class="badge badge-yellow">ADMİN</span>':''} ${isTargetMuted?'<span class="badge badge-red">MUTE</span>':''}</span>
-                    ${adminBtns}
+                    <div>
+                        <b>${uid}</b> 
+                        ${isOwner ? '<span class="badge badge-admin">Sahibi</span>' : ''}
+                        ${isMuted ? '<span class="badge badge-mute">Susturuldu</span>' : ''}
+                    </div>
+                    ${actions}
                 </div>
             `;
         });
     }
 
-    async function toggleWrite(uid, currentStatus) {
-        const action = currentStatus ? firebase.firestore.FieldValue.arrayRemove(uid) : firebase.firestore.FieldValue.arrayUnion(uid);
-        await db.collection("rooms").doc(currentRoom).update({ readOnlyUsers: action });
-        loadMembers();
+    async function createInvite() {
+        const code = Math.random().toString(36).substring(2,8).toUpperCase();
+        const exp = Date.now() + (inv_hrs.value * 3600000);
+        await db.collection("invites").doc(code).set({ roomId: currentRoomId, limit: parseInt(inv_lim.value), used: 0, expiry: exp });
+        inv_display.innerText = "Kodun: " + code;
+    }
+
+    async function joinWithInvite() {
+        const code = r_invite.value.trim().toUpperCase();
+        const invDoc = await db.collection("invites").doc(code).get();
+        if(!invDoc.exists) return alert("Kod geçersiz!");
+        
+        const invData = invDoc.data();
+        if(invData.used >= invData.limit || Date.now() > invData.expiry) return alert("Kodun süresi veya limiti dolmuş!");
+
+        const roomDoc = await db.collection("rooms").doc(invData.roomId).get();
+        if((roomDoc.data().bans || []).includes(currentUser)) return alert("Bu odadan banlanmışsınız!");
+
+        await db.collection("users").doc(currentUser).update({ rooms: firebase.firestore.FieldValue.arrayUnion(invData.roomId) });
+        await db.collection("invites").doc(code).update({ used: invData.used + 1 });
+        
+        location.reload();
+    }
+
+    async function createNewRoom() {
+        const name = r_new_name.value.trim(); if(!name) return;
+        const rid = "R-" + Math.random().toString(36).substring(2,7);
+        await db.collection("rooms").doc(rid).set({ name: name, owner: currentUser, mutes: [], bans: [] });
+        await db.collection("users").doc(currentUser).update({ rooms: firebase.firestore.FieldValue.arrayUnion(rid) });
+        location.reload();
     }
 
     async function kickUser(uid, isBan) {
-        if(!confirm(uid + " odadan çıkarılsın mı?")) return;
-        
-        await db.collection("users").doc(uid).update({
-            rooms: firebase.firestore.FieldValue.arrayRemove(currentRoom)
-        });
-
+        if(!confirm("Emin misin?")) return;
+        await db.collection("users").doc(uid).update({ rooms: firebase.firestore.FieldValue.arrayRemove(currentRoomId) });
         if(isBan) {
-            await db.collection("rooms").doc(currentRoom).update({
-                bannedUsers: firebase.firestore.FieldValue.arrayUnion(uid)
-            });
+            await db.collection("rooms").doc(currentRoomId).update({ bans: firebase.firestore.FieldValue.arrayUnion(uid) });
         }
-        loadMembers();
+        refreshData();
     }
 
-    // Takvim Fonksiyonları (Otonom Destekli)
-    function renderCal() {
-        calendar.innerHTML = "";
-        const days = new Date(2026, 1, 0).getDate();
-        for(let i=1; i<=days; i++) {
-            const d = document.createElement("div");
-            d.className = `day ${selectedDay === i ? 'selected' : ''}`;
-            d.innerHTML = `<b>${i}</b>`;
-            d.onclick = () => { selectedDay = i; task_area.style.display="block"; loadTasks(); renderCal(); };
-            calendar.appendChild(d);
-        }
-    }
-
-    async function saveTask() {
-        if(!canWrite) return alert("Bu odaya yazma izniniz yok!");
-        const text = t_input.value.trim();
-        const days = parseInt(t_days.value) || 1;
-        if(!text) return;
-        
-        const batch = db.batch();
-        for(let i=0; i<days; i++) {
-            const day = selectedDay + i;
-            if(day > 31) break;
-            const ref = db.collection("tasks").doc();
-            batch.set(ref, { r: currentRoom, u: currentUser, t: text, d: day, time: Date.now() });
-        }
-        await batch.commit();
-        t_input.value = ""; loadTasks();
-    }
-
-    async function loadTasks() {
-        const snap = await db.collection("tasks").where("r","==",currentRoom).where("d","==",selectedDay).get();
-        t_list.innerHTML = "";
-        snap.forEach(doc => {
-            t_list.innerHTML += `<div style="font-size:12px; margin-bottom:5px; border-bottom:1px solid #14532d"><b>${doc.data().u}:</b> ${doc.data().t}</div>`;
-        });
-    }
-
-    // Mesajlaşma
-    function startChat() {
-        if(chatSub) chatSub();
-        chatSub = db.collection("rooms").doc(currentRoom).collection("messages").orderBy("time","desc").limit(30).onSnapshot(s => {
-            chat_box.innerHTML = "";
-            s.forEach(d => {
-                const m = d.data();
-                chat_box.innerHTML += `<div style="margin-bottom:8px"><b>${m.u}:</b> ${m.t}</div>`;
-            });
-        });
-    }
-
-    function sendMsg() {
-        const t = c_input.value.trim(); if(!t) return;
-        db.collection("rooms").doc(currentRoom).collection("messages").add({ u: currentUser, t: t, time: Date.now() });
-        c_input.value = "";
-    }
-
-    async function createRoom() {
-        const n = r_name.value.trim(); if(!n) return;
-        const rid = n + "-" + Math.floor(Math.random()*1000);
-        await db.collection("rooms").doc(rid).set({ admin: currentUser, bannedUsers: [], readOnlyUsers: [] });
-        await db.collection("users").doc(currentUser).update({ rooms: firebase.firestore.FieldValue.arrayUnion(rid) });
-        currentRoom = rid; loadRooms();
+    async function toggleMute(uid, currentStatus) {
+        const action = currentStatus ? firebase.firestore.FieldValue.arrayRemove(uid) : firebase.firestore.FieldValue.arrayUnion(uid);
+        await db.collection("rooms").doc(currentRoomId).update({ mutes: action });
+        refreshData();
     }
 
     function switchSec(id, el) {
@@ -345,7 +291,7 @@
         document.getElementById(id).classList.add('active'); el.classList.add('active');
     }
 
-    async function logout() { localStorage.clear(); location.reload(); }
+    function logout() { localStorage.clear(); location.reload(); }
     if(currentUser) init();
 </script>
 </body>
