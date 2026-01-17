@@ -2,59 +2,49 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>08 Pro - Yetki & Profil Sistemi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>08 Takvim - Pro Fix</title>
+
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
+<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3652/3652191.png">
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
 :root{ --green:#22c55e; --dark:#022c22; --bg:#021f10; }
-body{ margin:0; background:var(--bg); font-family:sans-serif; color:#dcfce7; overflow-x:hidden; }
-input, button{ padding:12px; border-radius:10px; border:none; font-size:14px; outline:none; }
-button{ background:var(--green); cursor:pointer; font-weight:bold; color:var(--dark); transition:0.2s; }
-button:disabled{ opacity:0.3; cursor:not-allowed; }
-
+body{ 
+    margin:0; 
+    background: radial-gradient(circle at top, #064e3b 0%, #021f10 100%);
+    font-family: 'Segoe UI', sans-serif; 
+    color:#dcfce7; 
+    min-height: 100vh;
+}
 #auth { position:fixed; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; background:var(--dark); gap:15px; z-index:200; }
-#app { display:none; padding:20px; max-width: 900px; margin: auto; }
-
-/* Üst Bar */
-.top-bar { display:flex; justify-content:space-between; align-items:center; background:#14532d; padding:15px; border-radius:15px; margin-bottom:10px; border: 1px solid var(--green); }
-.user-info { display:flex; align-items:center; gap:12px; }
-.pfp { width:55px; height:55px; border-radius:50%; object-fit:cover; border:2px solid var(--green); cursor:pointer; }
-
-/* Oda ve Üyeler */
-.room-bar { display:flex; gap:10px; margin-bottom:10px; overflow-x:auto; padding:5px 0; }
-.room-tab { padding:8px 15px; background:var(--dark); border-radius:20px; font-size:12px; cursor:pointer; border:1px solid #14532d; white-space:nowrap; }
+#app { display:none; padding:15px; max-width: 900px; margin: auto; }
+.top-bar { display:flex; justify-content:space-between; align-items:center; background:rgba(20, 83, 45, 0.7); backdrop-filter: blur(10px); padding:15px; border-radius:15px; margin-bottom:10px; border: 1px solid var(--green); }
+.pfp { width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid var(--green); cursor:pointer; }
+.room-bar { display:flex; gap:10px; margin-bottom:10px; overflow-x:auto; padding:5px 0; scrollbar-width: none; }
+.room-tab { padding:8px 18px; background:var(--dark); border-radius:20px; font-size:12px; cursor:pointer; border:1px solid #14532d; white-space:nowrap; transition: 0.3s; }
 .room-tab.active { background:var(--green); color:var(--dark); font-weight:bold; }
-
-.room-header { background: #064e3b; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; flex-direction:column; display:flex; gap:10px; border-left: 4px solid var(--green); }
-.member-chip { background:rgba(0,0,0,0.2); padding:4px 10px; border-radius:15px; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; border: 1px solid transparent; }
-.member-chip:hover { border-color:var(--green); }
-.member-chip.has-auth { color: #facc15; font-weight:bold; }
-
-/* Takvim */
-.calendar { display:grid; grid-template-columns:repeat(7, 1fr); gap:8px; }
-.day { background:var(--dark); padding:5px; border-radius:10px; min-height:100px; cursor:pointer; border:1px solid #114120; }
+.room-header { background: rgba(6, 78, 59, 0.5); padding: 12px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid var(--green); }
+.member-chip { background:rgba(0,0,0,0.3); padding:5px 12px; border-radius:15px; font-size:11px; cursor:pointer; margin: 2px; display:inline-block; }
+.calendar { display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; }
+.day { background:rgba(2, 44, 34, 0.8); padding:5px; border-radius:8px; min-height:85px; cursor:pointer; border:1px solid #114120; font-size: 13px; }
 .day.active { border: 2px solid white !important; background: #064e3b; }
-.mini-task { font-size: 9px; padding: 2px 4px; border-radius: 3px; margin-bottom: 2px; background: var(--green); color: var(--dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mini-task.is-done { opacity: 0.3; background: #166534; color: #dcfce7; }
-
-/* Görev Alanı */
-.task-area { margin-top:20px; background:var(--dark); padding:20px; border-radius:15px; }
-.task-item { display:flex; align-items:center; gap:10px; background:#064e3b; padding:10px; border-radius:8px; margin-bottom:5px; border-left: 5px solid var(--green); }
-.done { opacity: 0.5; text-decoration: line-through; }
-
-/* Profil Modal */
-#profile_modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:300; justify-content:center; align-items:center; padding:20px; }
-.modal-content { background:var(--dark); padding:30px; border-radius:20px; text-align:center; border:2px solid var(--green); max-width:300px; width:100%; }
-.modal-pfp { width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid var(--green); margin-bottom:15px; }
+.mini-task { font-size: 8px; padding: 2px; border-radius: 3px; margin-top: 2px; background: var(--green); color: var(--dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-area { margin-top:15px; background:rgba(2, 44, 34, 0.9); padding:15px; border-radius:15px; border-top: 1px solid var(--green); }
+.task-item { display:flex; align-items:center; gap:10px; background:#064e3b; padding:10px; border-radius:8px; margin-bottom:5px; }
+#profile_modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:300; justify-content:center; align-items:center; }
+.modal-content { background:var(--dark); padding:25px; border-radius:20px; text-align:center; border:1px solid var(--green); width:80%; max-width:300px; }
+input, button { padding:10px; border-radius:8px; border:none; }
+button { background:var(--green); color:var(--dark); font-weight:bold; cursor:pointer; }
 </style>
 </head>
 <body>
 
 <div id="auth">
-    <h1 style="color:var(--green)">08 TAKVİM PRO</h1>
+    <h1 style="color:var(--green)">08 TAKVİM</h1>
     <input id="u_name" placeholder="Kullanıcı Adı">
     <input id="u_pass" type="password" placeholder="Şifre">
     <div style="display:flex; gap:10px;">
@@ -65,18 +55,15 @@ button:disabled{ opacity:0.3; cursor:not-allowed; }
 
 <div id="app">
     <div class="top-bar">
-        <div class="user-info">
+        <div class="user-info" style="display:flex; align-items:center; gap:10px;">
             <input type="file" id="pfp_input" style="display:none" onchange="uploadPfp()">
             <img id="user_pfp" class="pfp" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" onclick="document.getElementById('pfp_input').click()">
-            <div>
-                <b id="welcome_msg">---</b>
-                <div id="user_reg" style="font-size:10px; opacity:0.6">---</div>
-            </div>
+            <div><b id="welcome_msg">---</b><div id="user_reg" style="font-size:10px; opacity:0.6">---</div></div>
         </div>
         <div style="display:flex; gap:5px;">
-            <button onclick="createRoom()" style="background:#3b82f6; color:white; font-size:11px;">+ Oda Kur</button>
-            <button onclick="joinRoom()" style="background:#facc15; font-size:11px;">+ Odaya Gir</button>
-            <button onclick="logout()" style="background:#ef4444; color:white; font-size:11px;">Çıkış</button>
+            <button onclick="createRoom()" style="background:#3b82f6; color:white; font-size:10px;">Oda Kur</button>
+            <button onclick="joinRoom()" style="background:#facc15; font-size:10px;">Katıl</button>
+            <button onclick="logout()" style="background:#ef4444; color:white; font-size:10px;">Çıkış</button>
         </div>
     </div>
 
@@ -84,19 +71,19 @@ button:disabled{ opacity:0.3; cursor:not-allowed; }
 
     <div id="room_detail_header" class="room-header" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span id="active_room_name" style="font-weight:bold; font-size:18px;">---</span>
-            <div style="background:rgba(0,0,0,0.3); padding:5px 10px; border-radius:5px; font-size:11px; cursor:pointer;" onclick="copyCode()">Kod: <b id="active_room_code">---</b></div>
+            <span id="active_room_name" style="font-weight:bold;">---</span>
+            <div style="font-size:10px; opacity:0.7" onclick="copyCode()">Kod: <b id="active_room_code" style="text-decoration:underline; cursor:pointer;">---</b></div>
         </div>
-        <div id="members_display" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+        <div id="members_display" style="margin-top:10px;"></div>
     </div>
 
     <div class="calendar" id="calendar"></div>
 
     <div class="task-area">
-        <h3 id="selected_date_text">Gün Seçiniz</h3>
+        <h3 id="selected_date_text" style="margin-top:0; font-size:16px;">Gün seçin</h3>
         <div id="action_controls" style="display:none; gap:10px;">
-            <input id="task_input" style="flex:1; background:#021f10; color:white; border:1px solid var(--green)" placeholder="Görev yazın...">
-            <button id="add_btn" onclick="addTask()">EKLE</button>
+            <input id="task_input" style="flex:1; background:rgba(0,0,0,0.2); color:white; border:1px solid #14532d" placeholder="Görev...">
+            <button id="add_btn" onclick="addTask()">Ekle</button>
         </div>
         <div id="task_list" style="margin-top:10px;"></div>
     </div>
@@ -104,12 +91,11 @@ button:disabled{ opacity:0.3; cursor:not-allowed; }
 
 <div id="profile_modal" onclick="this.style.display='none'">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <img id="m_pfp" class="modal-pfp" src="">
-        <h2 id="m_name" style="margin:10px 0 5px 0; color:var(--green);"></h2>
-        <p id="m_reg" style="font-size:12px; opacity:0.7; margin-bottom:20px;"></p>
-        <div id="owner_actions" style="display:none; border-top:1px solid #222; pt:15px;">
-            <p style="font-size:11px; margin-bottom:10px;">Oda Sahibi Yetkileri:</p>
-            <button id="auth_toggle_btn" style="width:100%; font-size:12px;"></button>
+        <img id="m_pfp" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:2px solid var(--green)">
+        <h2 id="m_name" style="color:var(--green); margin:10px 0"></h2>
+        <p id="m_reg" style="font-size:11px; opacity:0.6"></p>
+        <div id="owner_actions" style="display:none; margin-top:20px; border-top:1px solid #333; padding-top:15px;">
+            <button id="auth_toggle_btn" style="width:100%"></button>
         </div>
     </div>
 </div>
@@ -127,47 +113,40 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-let currentUser = null; 
-let currentRoom = null; 
-let myRooms = []; 
-let selectedDay = null;
-let canEdit = false; // Mevcut odadaki yetki durumu
+let currentUser = null, currentRoom = null, myRooms = [], selectedDay = null, canEdit = false;
 
-window.onload = async function() {
-    const u = localStorage.getItem('08_user');
-    const p = localStorage.getItem('08_pass');
+window.onload = async () => {
+    const u = localStorage.getItem('08_user'), p = localStorage.getItem('08_pass');
     if(u && p) { u_name.value = u; u_pass.value = p; handleAuth('login'); }
 };
 
 async function handleAuth(type) {
-    const user = u_name.value.trim().toLowerCase();
-    const pass = u_pass.value.trim();
+    const user = u_name.value.trim().toLowerCase(), pass = u_pass.value.trim();
     if(!user || !pass) return;
-    const userRef = db.collection("users").doc(user);
-    const doc = await userRef.get();
-
+    const ref = db.collection("users").doc(user);
+    const doc = await ref.get();
     if(type === 'register') {
-        if(doc.exists) return alert("Bu kullanıcı var!");
-        await userRef.set({ pass, regDate: new Date().toLocaleDateString('tr-TR'), pfp: "", rooms: [] });
-        alert("Kayıt başarılı!");
+        if(doc.exists) return alert("Hata!");
+        await ref.set({ pass, regDate: new Date().toLocaleDateString('tr-TR'), pfp: "", rooms: [] });
+        alert("Tamam!");
     } else {
-        if(!doc.exists || doc.data().pass !== pass) return alert("Hatalı!");
+        if(!doc.exists || doc.data().pass !== pass) return alert("Yanlış!");
         localStorage.setItem('08_user', user); localStorage.setItem('08_pass', pass);
         currentUser = user;
         const data = doc.data();
         myRooms = data.rooms || [];
         if(data.pfp) user_pfp.src = data.pfp;
-        user_reg.innerText = "Kayıt: " + (data.regDate || "Eski");
+        user_reg.innerText = "Kayıt: " + data.regDate;
         welcome_msg.innerText = currentUser.toUpperCase();
         auth.style.display = "none"; app.style.display = "block";
-        updateRoomBar();
-        if(myRooms.length > 0) switchRoom(myRooms[0]); else renderCalendar();
+        if(myRooms.length > 0) switchRoom(myRooms[0]); else { updateRoomBar(); renderCalendar(); }
     }
 }
 
 async function updateRoomBar() {
     room_bar.innerHTML = "";
-    for(let rID of myRooms) {
+    const uniqueRooms = [...new Set(myRooms)]; // Çift oda sorununu çözen anahtar satır
+    for(let rID of uniqueRooms) {
         const rDoc = await db.collection("rooms").doc(rID).get();
         if(rDoc.exists) {
             const div = document.createElement("div");
@@ -180,135 +159,98 @@ async function updateRoomBar() {
 }
 
 async function switchRoom(rID) {
-    currentRoom = rID;
-    selectedDay = null;
-    updateRoomBar();
+    currentRoom = rID; selectedDay = null;
+    await updateRoomBar();
     room_detail_header.style.display = "flex";
-    
     const rDoc = await db.collection("rooms").doc(rID).get();
-    const roomData = rDoc.data();
-    active_room_name.innerText = roomData.name;
+    const rData = rDoc.data();
+    active_room_name.innerText = rData.name;
     active_room_code.innerText = rID;
-
-    // Yetki Kontrolü
-    const editors = roomData.editors || [];
-    canEdit = (roomData.creator === currentUser || editors.includes(currentUser));
+    canEdit = (rData.creator === currentUser || (rData.editors && rData.editors.includes(currentUser)));
     add_btn.disabled = !canEdit;
-
-    // Üyeleri Getir
     const membersSnap = await db.collection("users").where("rooms", "array-contains", rID).get();
     members_display.innerHTML = "";
     membersSnap.forEach(mDoc => {
-        const mData = mDoc.data();
-        const mID = mDoc.id;
-        const isEditor = (roomData.creator === mID || (roomData.editors && roomData.editors.includes(mID)));
-        
+        const mData = mDoc.data(), mID = mDoc.id;
+        const isEd = (rData.creator === mID || (rData.editors && rData.editors.includes(mID)));
         const span = document.createElement("span");
-        span.className = "member-chip" + (isEditor ? " has-auth" : "");
-        span.innerHTML = `<span>${isEditor ? '⭐' : '👤'}</span> ${mID.toUpperCase()}`;
-        span.onclick = () => showProfile(mID, mData, roomData);
+        span.className = "member-chip" + (isEd ? " has-auth" : "");
+        span.innerHTML = `${isEd ? '⭐' : '👤'} ${mID.toUpperCase()}`;
+        span.onclick = () => showProfile(mID, mData, rData);
         members_display.appendChild(span);
     });
-
     renderCalendar();
 }
 
-async function showProfile(mID, mData, roomData) {
+async function showProfile(mID, mData, rData) {
     m_pfp.src = mData.pfp || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-    m_name.innerText = mID.toUpperCase();
-    m_reg.innerText = "Kayıt: " + (mData.regDate || "---");
-    
-    // Eğer odayı ben kurduysam, başkasının yetkisini değiştirebilirim
-    if(roomData.creator === currentUser && mID !== currentUser) {
+    m_name.innerText = mID.toUpperCase(); m_reg.innerText = "Kayıt: " + mData.regDate;
+    if(rData.creator === currentUser && mID !== currentUser) {
         owner_actions.style.display = "block";
-        const editors = roomData.editors || [];
-        const isAlreadyEditor = editors.includes(mID);
-        auth_toggle_btn.innerText = isAlreadyEditor ? "Yetkiyi Kaldır" : "Düzenleme Yetkisi Ver";
-        auth_toggle_btn.style.background = isAlreadyEditor ? "#ef4444" : "#22c55e";
-        auth_toggle_btn.onclick = () => toggleUserAuth(mID, isAlreadyEditor);
-    } else {
-        owner_actions.style.display = "none";
-    }
-    
+        const isEd = (rData.editors && rData.editors.includes(mID));
+        auth_toggle_btn.innerText = isEd ? "Yetki Al" : "Yetki Ver";
+        auth_toggle_btn.onclick = async () => {
+            const op = isEd ? firebase.firestore.FieldValue.arrayRemove(mID) : firebase.firestore.FieldValue.arrayUnion(mID);
+            await db.collection("rooms").doc(currentRoom).update({ editors: op });
+            profile_modal.style.display='none'; switchRoom(currentRoom);
+        };
+    } else { owner_actions.style.display = "none"; }
     profile_modal.style.display = "flex";
 }
 
-async function toggleUserAuth(targetUser, remove) {
-    const rRef = db.collection("rooms").doc(currentRoom);
-    if(remove) {
-        await rRef.update({ editors: firebase.firestore.FieldValue.arrayRemove(targetUser) });
-    } else {
-        await rRef.update({ editors: firebase.firestore.FieldValue.arrayUnion(targetUser) });
-    }
-    profile_modal.style.display = "none";
-    switchRoom(currentRoom);
-}
-
 async function renderCalendar() {
+    if(!currentRoom) { calendar.innerHTML = "<center>Oda seçin.</center>"; return; }
     const last = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
     const snap = await db.collection("tasks").where("room", "==", currentRoom).where("month", "==", new Date().getMonth()).get();
     const all = snap.docs.map(d => d.data());
-
-    let html = "";
+    let h = "";
     for(let i=1; i<=last; i++) {
-        let tasks = "";
-        all.filter(t => t.day === i).forEach(t => {
-            tasks += `<div class="mini-task ${t.done?'is-done':''}">${t.text}</div>`;
-        });
-        html += `<div class="day ${selectedDay===i?'active':''}" onclick="selectDayQuick(${i})"><b>${i}</b>${tasks}</div>`;
+        let ts = "";
+        all.filter(t => t.day === i).forEach(t => { ts += `<div class="mini-task ${t.done?'is-done':''}">${t.text}</div>`; });
+        h += `<div class="day ${selectedDay===i?'active':''}" onclick="selectDayQuick(${i})"><b>${i}</b>${ts}</div>`;
     }
-    calendar.innerHTML = html;
+    calendar.innerHTML = h;
 }
 
 function selectDayQuick(d) { selectedDay = d; renderCalendar(); selectDayUI(d); }
-function selectDayUI(d) { selected_date_text.innerText = d + ". Gün"; action_controls.style.display = "flex"; loadTasks(); }
+function selectDayUI(d) { selected_date_text.innerText = d + ". Gün Planı"; action_controls.style.display = "flex"; loadTasks(); }
 
 async function loadTasks() {
     const snap = await db.collection("tasks").where("room", "==", currentRoom).where("day", "==", selectedDay).where("month", "==", new Date().getMonth()).get();
-    let html = "";
+    let h = "";
     snap.forEach(doc => {
         const d = doc.data();
-        html += `<div class="task-item ${d.done?'done':''}">
-            <input type="checkbox" ${!canEdit ? 'disabled' : ''} ${d.done?'checked':''} onchange="toggle('${doc.id}',${d.done})">
-            <span style="flex:1">${d.text}</span>
-            ${canEdit ? `<b onclick="del('${doc.id}')" style="cursor:pointer;color:red">✕</b>` : ''}
+        h += `<div class="task-item" style="${d.done?'opacity:0.5':''}">
+            <input type="checkbox" ${!canEdit?'disabled':''} ${d.done?'checked':''} onchange="toggle('${doc.id}',${d.done})">
+            <span style="flex:1; ${d.done?'text-decoration:line-through':''}">${d.text}</span>
+            ${canEdit ? `<b onclick="del('${doc.id}')" style="color:red; cursor:pointer;">✕</b>` : ''}
         </div>`;
     });
-    task_list.innerHTML = html || "<small>Görev yok.</small>";
+    task_list.innerHTML = h || "<small>Görev yok.</small>";
 }
 
 async function addTask() {
-    if(!canEdit) return;
-    const txt = task_input.value.trim();
-    if(!txt) return;
+    const txt = task_input.value.trim(); if(!txt) return;
     await db.collection("tasks").add({ room: currentRoom, text: txt, day: selectedDay, month: new Date().getMonth(), done: false });
     task_input.value = ""; loadTasks(); renderCalendar();
 }
-
-async function toggle(id, s) { if(!canEdit) return; await db.collection("tasks").doc(id).update({ done: !s }); loadTasks(); renderCalendar(); }
-async function del(id) { if(!canEdit) return; if(confirm("Sil?")) { await db.collection("tasks").doc(id).delete(); loadTasks(); renderCalendar(); } }
-
+async function toggle(id, s) { await db.collection("tasks").doc(id).update({ done: !s }); loadTasks(); renderCalendar(); }
+async function del(id) { if(confirm("Sil?")) { await db.collection("tasks").doc(id).delete(); loadTasks(); renderCalendar(); } }
 async function createRoom() {
-    const name = prompt("Oda adı:");
-    if(!name) return;
+    const n = prompt("Oda adı:"); if(!n) return;
     const rID = Math.random().toString(36).substring(2,8).toUpperCase() + "-08";
-    await db.collection("rooms").doc(rID).set({ name, creator: currentUser, editors: [] });
-    myRooms.push(rID);
-    await db.collection("users").doc(currentUser).update({ rooms: myRooms });
+    await db.collection("rooms").doc(rID).set({ name: n, creator: currentUser, editors: [] });
+    myRooms.push(rID); await db.collection("users").doc(currentUser).update({ rooms: myRooms });
     switchRoom(rID);
 }
-
 async function joinRoom() {
-    const rID = prompt("Oda Kodu:");
-    if(!rID || myRooms.includes(rID)) return;
+    const rID = prompt("Oda Kodu:"); if(!rID || myRooms.includes(rID)) return;
     const rDoc = await db.collection("rooms").doc(rID).get();
-    if(!rDoc.exists) return alert("Oda yok!");
-    myRooms.push(rID);
-    await db.collection("users").doc(currentUser).update({ rooms: myRooms });
+    if(!rDoc.exists) return alert("Yok.");
+    myRooms.push(rID); await db.collection("users").doc(currentUser).update({ rooms: myRooms });
     switchRoom(rID);
 }
-
-function copyCode() { navigator.clipboard.writeText(currentRoom); alert("Kod kopyalandı!"); }
+function copyCode() { navigator.clipboard.writeText(currentRoom); alert("Kopyalandı!"); }
 async function uploadPfp() {
     const file = pfp_input.files[0];
     const reader = new FileReader();
