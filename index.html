@@ -3,119 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>08 Takvim - Zoom Edition</title>
+    <title>08 Takvim - Admin Pro</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         :root { --green: #22c55e; --dark: #022c22; --bg: #021f10; --accent: #facc15; --red: #ef4444; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { margin: 0; background: radial-gradient(circle at top, #064e3b 0%, #021f10 100%); color: #dcfce7; min-height: 100vh; overflow-x: hidden; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: radial-gradient(circle at top, #064e3b 0%, #021f10 100%); color: #dcfce7; min-height: 100vh; }
         
-        /* Modal (Resim Büyütme) Stili */
-        #imgModal { display: none; position: fixed; z-index: 10000; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; padding: 20px; }
-        #imgModal img { max-width: 100%; max-height: 90vh; border-radius: 10px; border: 2px solid var(--green); box-shadow: 0 0 30px rgba(34,197,94,0.3); }
-        .close-modal { position: absolute; top: 20px; right: 30px; color: white; font-size: 40px; font-weight: bold; cursor: pointer; }
-
         #auth { position: fixed; inset: 0; background: var(--dark); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 9999; }
         #app { display: none; padding: 15px; max-width: 600px; margin: auto; padding-bottom: 100px; }
         
+        /* Oda Barı */
+        .room-bar { display: flex; overflow-x: auto; padding: 10px 0; gap: 10px; scrollbar-width: none; }
+        .room-tab { padding: 8px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; border: 1px solid rgba(34,197,94,0.2); white-space: nowrap; cursor: pointer; color: #86efac; }
+        .room-tab.active { background: var(--green); color: var(--dark); font-weight: bold; }
+
+        /* Admin Rozeti */
+        .admin-badge { background: var(--accent); color: black; font-size: 9px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
+
         .top-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(20, 83, 45, 0.4); padding: 12px; border-radius: 20px; border: 1px solid rgba(34, 197, 94, 0.3); backdrop-filter: blur(10px); }
         .pfp { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--green); object-fit: cover; }
         
         .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .day { background: rgba(2, 44, 34, 0.6); padding: 8px; border-radius: 10px; min-height: 80px; border: 1px solid rgba(17, 65, 32, 0.5); cursor: pointer; }
-        .day.active { border: 2px solid #fff; }
-        .task-dots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; }
-        .dot { width: 5px; height: 5px; background: var(--green); border-radius: 50%; }
+        .day { background: rgba(2, 44, 34, 0.6); padding: 8px; border-radius: 10px; min-height: 70px; border: 1px solid rgba(17, 65, 32, 0.5); cursor: pointer; font-size: 12px; }
+        .day.active { border: 2px solid white; }
         
         .nav-tabs { display: flex; gap: 8px; margin: 15px 0; }
-        .nav-tab { flex: 1; padding: 12px; text-align: center; background: rgba(0,0,0,0.2); border-radius: 15px; cursor: pointer; font-size: 12px; transition: 0.3s; }
+        .nav-tab { flex: 1; padding: 12px; text-align: center; background: rgba(0,0,0,0.2); border-radius: 15px; cursor: pointer; font-size: 11px; }
         .nav-tab.active { background: var(--green); color: var(--dark); font-weight: bold; }
 
-        input { background: rgba(0,0,0,0.3); border: 1px solid #14532d; color: white; padding: 12px; border-radius: 12px; width: 100%; margin-bottom: 10px; outline: none; }
-        button { padding: 12px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        
-        .section { display: none; }
-        .section.active { display: block; }
-        .chat-img { max-width: 180px; border-radius: 12px; margin-top: 8px; border: 1px solid var(--green); cursor: zoom-in; transition: transform 0.2s; }
-        .chat-img:hover { transform: scale(1.02); }
-        .room-tab { padding: 8px 16px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; border: 1px solid rgba(34,197,94,0.2); white-space: nowrap; cursor: pointer; color: #86efac; margin-right: 8px; }
-        .room-tab.active { background: var(--green); color: var(--dark); }
+        input, button { padding: 12px; border-radius: 12px; border: none; outline: none; }
+        input { background: rgba(0,0,0,0.3); color: white; width: 100%; margin-bottom: 8px; }
+        button { font-weight: bold; cursor: pointer; }
+
+        .member-list { background: rgba(0,0,0,0.2); border-radius: 15px; padding: 10px; margin-top: 10px; }
+        .member-item { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        .chat-img { max-width: 200px; border-radius: 10px; margin-top: 5px; cursor: zoom-in; }
     </style>
 </head>
 <body>
 
-<div id="imgModal" onclick="this.style.display='none'">
-    <span class="close-modal">&times;</span>
-    <img id="modalContent">
-</div>
-
 <div id="auth">
-    <h1 style="color:var(--green); letter-spacing: 3px;">08 TAKVİM</h1>
+    <h1 style="color:var(--green)">08 TAKVİM</h1>
     <input id="u_name" placeholder="Kullanıcı Adı" style="width:260px">
     <input id="u_pass" type="password" placeholder="Şifre" style="width:260px">
-    <button onclick="handleLogin()" style="background:var(--green); color:var(--dark); width:260px; margin-bottom:5px;">GİRİŞ YAP</button>
-    <button onclick="handleRegister()" style="background:transparent; color:var(--green); border: 1px solid var(--green); width:260px;">KAYIT OL</button>
+    <button onclick="handleAuth('login')" style="background:var(--green); color:var(--dark); width:260px">GİRİŞ / KAYIT</button>
 </div>
 
 <div id="app">
     <div class="top-bar">
         <div style="display:flex; align-items:center; gap:12px;">
-            <img id="user_pfp" class="pfp" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" onclick="document.getElementById('pfp_input').click()">
-            <input type="file" id="pfp_input" style="display:none" onchange="uploadPfp()">
-            <div>
-                <b id="welcome_msg" style="text-transform: uppercase;">...</b>
-                <div id="my_motto" style="font-size:10px; color:var(--accent)" onclick="updateMotto()">Motto yaz...</div>
-            </div>
+            <img id="user_pfp" class="pfp" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+            <div><b id="welcome_msg">...</b></div>
         </div>
-        <button onclick="logout()" style="background:var(--red); color:white; padding:6px 10px; width:auto; font-size:10px;">ÇIKIŞ</button>
+        <button onclick="logout()" style="background:var(--red); color:white; padding:5px 10px; width:auto; font-size:10px;">ÇIKIŞ</button>
     </div>
 
     <div class="nav-tabs">
         <div class="nav-tab active" onclick="switchSec('cal_sec', this)">TAKVİM</div>
         <div class="nav-tab" onclick="switchSec('chat_sec', this)">SOHBET</div>
-        <div class="nav-tab" onclick="switchSec('room_sec', this)">ODALAR</div>
+        <div class="nav-tab" onclick="switchSec('room_sec', this)">YÖNETİM</div>
     </div>
 
     <div id="cal_sec" class="section active">
-        <div id="room_bar" style="display:flex; overflow-x:auto; padding-bottom:10px; scrollbar-width:none; margin-bottom:10px;"></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <button onclick="changeMonth(-1)" style="background:none; color:white; width:auto;">❮</button>
-            <b id="month_label">...</b>
-            <button onclick="changeMonth(1)" style="background:none; color:white; width:auto;">❯</button>
-        </div>
+        <div id="room_bar" class="room-bar"></div>
         <div id="calendar" class="calendar"></div>
-        <div style="margin-top:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:20px; border:1px solid #14532d;">
-            <h4 id="selected_date_text" style="font-size:14px; color:var(--accent)">GÜN SEÇ</h4>
-            <div id="task_controls" style="display:none; flex-direction:column; gap:8px;">
-                <input id="task_input" placeholder="Planın nedir?">
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <small>Süre:</small>
-                    <input type="number" id="repeat_days" value="1" min="1" style="width:60px; margin:0;">
-                    <button onclick="addTask()" style="background:var(--green); color:var(--dark); flex:1; width:auto;">KAYDET</button>
-                </div>
+        <div id="task_area" style="margin-top:20px;">
+            <h4 id="sel_date_label" style="color:var(--accent)">GÜN SEÇİN</h4>
+            <div id="task_inputs" style="display:none">
+                <input id="t_input" placeholder="Yeni plan...">
+                <button onclick="addTask()" style="background:var(--green); width:100%">KAYDET</button>
             </div>
-            <div id="task_list" style="margin-top:15px;"></div>
+            <div id="t_list" style="margin-top:10px;"></div>
         </div>
     </div>
 
     <div id="chat_sec" class="section">
-        <div style="background:rgba(0,0,0,0.3); border-radius:20px; height:450px; display:flex; flex-direction:column; border:1px solid #14532d;">
-            <div id="chat_messages" style="flex:1; overflow-y:auto; padding:15px; font-size:13px;"></div>
-            <div style="padding:10px; display:flex; gap:8px; background:rgba(0,0,0,0.4);">
-                <button onclick="document.getElementById('chat_file').click()" style="background:rgba(255,255,255,0.1); color:white; width:45px; border-radius:12px;">📷</button>
-                <input type="file" id="chat_file" style="display:none" onchange="sendChatImg()">
-                <input id="chat_input" placeholder="Mesaj..." style="margin:0; flex:1;">
-                <button onclick="sendMsg()" style="background:var(--green); width:45px; border-radius:12px;">➤</button>
-            </div>
+        <div id="chat_box" style="height:350px; overflow-y:auto; background:rgba(0,0,0,0.2); border-radius:15px; padding:15px; margin-bottom:10px; font-size:13px;"></div>
+        <div style="display:flex; gap:8px;">
+            <label style="background:#3b82f6; width:45px; height:45px; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                📷 <input type="file" accept="image/*" id="c_file" style="display:none" onchange="sendImg()">
+            </label>
+            <input id="c_input" placeholder="Mesaj..." style="margin:0; flex:1">
+            <button onclick="sendMsg()" style="background:var(--green); width:45px;">➤</button>
         </div>
     </div>
 
     <div id="room_sec" class="section">
-        <input id="new_room_name" placeholder="Oda Adı">
-        <button onclick="createRoom()" style="background:#3b82f6; color:white; width:100%; margin-bottom:15px;">YENİ ODA KUR</button>
-        <input id="join_code" placeholder="Davet Kodu">
-        <button onclick="joinRoom()" style="background:var(--accent); width:100%;">KODA KATIL</button>
+        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:20px;">
+            <h4>Oda Oluştur / Katıl</h4>
+            <input id="r_name" placeholder="Oda Adı">
+            <button onclick="createRoom()" style="background:var(--green); width:100%; margin-bottom:15px;">ODA KUR</button>
+            <input id="r_code" placeholder="Davet Kodu">
+            <button onclick="joinRoom()" style="background:var(--accent); width:100%;">KODA KATIL</button>
+        </div>
+
+        <div id="admin_panel" style="margin-top:20px; display:none;">
+            <h4 style="color:var(--accent)">ODA YÖNETİMİ</h4>
+            <div id="room_info_box" style="background:rgba(239,68,68,0.1); padding:10px; border-radius:10px; border:1px solid var(--red);">
+                <p id="room_id_display" style="font-size:12px;"></p>
+                <button onclick="deleteRoom()" style="background:var(--red); color:white; width:100%">ODAYI TAMAMEN SİL</button>
+            </div>
+        </div>
+
+        <div class="member-list">
+            <h4>Odadaki Kullanıcılar</h4>
+            <div id="mem_list_box"></div>
+        </div>
     </div>
 </div>
 
@@ -131,169 +127,153 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let currentUser = localStorage.getItem('08_user') || null;
-    let currentRoom = null, selectedDay = null;
-    let viewDate = new Date(), chatListen = null;
+    let currentUser = localStorage.getItem('08_u') || null;
+    let currentRoom = null, selectedDay = null, chatSub = null;
+    let today = new Date();
 
-    // RESMİ BÜYÜTME FONKSİYONU
-    function openImage(src) {
-        const modal = document.getElementById('imgModal');
-        const modalImg = document.getElementById('modalContent');
-        modal.style.display = "flex";
-        modalImg.src = src;
-    }
-
-    async function handleLogin() {
+    async function handleAuth() {
         const u = u_name.value.trim().toLowerCase(), p = u_pass.value;
-        if(!u || !p) return alert("Eksik bilgi!");
-        const doc = await db.collection("users").doc(u).get();
-        if(!doc.exists) return alert("Hesap yok!");
-        if(doc.data().pass !== p) return alert("Hatalı şifre!");
-        currentUser = u; localStorage.setItem('08_user', u); initApp();
+        if(!u || !p) return alert("Doldur knk!");
+        const ref = db.collection("users").doc(u);
+        const doc = await ref.get();
+        if(!doc.exists) {
+            await ref.set({ pass:p, rooms:[], pfp:"" });
+            alert("Kaydın yapıldı!");
+        } else if(doc.data().pass !== p) return alert("Şifre yanlış!");
+        currentUser = u; localStorage.setItem('08_u', u); init();
     }
 
-    async function handleRegister() {
-        const u = u_name.value.trim().toLowerCase(), p = u_pass.value;
-        if(!u || !p) return alert("Eksik bilgi!");
-        const doc = await db.collection("users").doc(u).get();
-        if(doc.exists) return alert("Bu isim alınmış!");
-        await db.collection("users").doc(u).set({ pass:p, motto:"08!", rooms:[], pfp:"" });
-        alert("Kayıt başarılı!"); currentUser = u; localStorage.setItem('08_user', u); initApp();
-    }
-
-    async function initApp() {
-        if(!currentUser) return;
-        auth.style.display = "none"; app.style.display = "block";
-        const doc = await db.collection("users").doc(currentUser).get();
+    async function init() {
+        auth.style.display="none"; app.style.display="block";
         welcome_msg.innerText = currentUser;
-        if(doc.data().pfp) user_pfp.src = doc.data().pfp;
-        my_motto.innerText = doc.data().motto;
-        currentRoom = doc.data().rooms[0] || null;
-        updateRoomBar(); renderCalendar();
+        const u = await db.collection("users").doc(currentUser).get();
+        currentRoom = u.data().rooms[0] || null;
+        updateUI();
     }
 
-    async function renderCalendar() {
-        const month = viewDate.getMonth(), year = viewDate.getFullYear();
-        month_label.innerText = new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(viewDate).toUpperCase();
-        const last = new Date(year, month + 1, 0).getDate();
-        calendar.innerHTML = "";
-        let tasks = [];
-        if(currentRoom) {
-            const snap = await db.collection("tasks").where("room","==",currentRoom).where("month","==",month).where("year","==",year).get();
-            tasks = snap.docs.map(d => d.data());
+    async function updateUI() {
+        const u = await db.collection("users").doc(currentUser).get();
+        const rList = u.data().rooms || [];
+        room_bar.innerHTML = "";
+        rList.forEach(async id => {
+            const r = await db.collection("rooms").doc(id).get();
+            if(r.exists) {
+                const btn = document.createElement("div");
+                btn.className = `room-tab ${currentRoom === id ? 'active' : ''}`;
+                btn.innerText = r.data().name;
+                btn.onclick = () => { currentRoom = id; updateUI(); };
+                room_bar.appendChild(btn);
+            }
+        });
+        renderCal();
+        loadMembers();
+        checkAdmin();
+    }
+
+    async function checkAdmin() {
+        if(!currentRoom) return;
+        const r = await db.collection("rooms").doc(currentRoom).get();
+        if(r.exists && r.data().admin === currentUser) {
+            admin_panel.style.display = "block";
+            room_id_display.innerText = "Davet Kodunuz: " + currentRoom;
+        } else {
+            admin_panel.style.display = "none";
         }
-        for(let i=1; i<=last; i++) {
-            const dayTasks = tasks.filter(t => t.day === i);
-            const div = document.createElement("div");
-            div.className = `day ${selectedDay === i ? 'active' : ''}`;
-            let dots = '<div class="task-dots">';
-            dayTasks.forEach(t => dots += `<div class="dot" style="opacity:${t.done?0.3:1}"></div>`);
-            dots += '</div>';
-            div.innerHTML = `<b>${i}</b>${dots}`;
-            div.onclick = () => { selectedDay = i; renderCalendar(); task_controls.style.display="flex"; selected_date_text.innerText = i + " " + month_label.innerText; loadTasks(); };
-            calendar.appendChild(div);
+    }
+
+    async function loadMembers() {
+        if(!currentRoom) return;
+        mem_list_box.innerHTML = "Yükleniyor...";
+        const snap = await db.collection("users").where("rooms", "array-contains", currentRoom).get();
+        mem_list_box.innerHTML = "";
+        snap.forEach(doc => {
+            mem_list_box.innerHTML += `<div class="member-item">🟢 ${doc.id}</div>`;
+        });
+    }
+
+    async function createRoom() {
+        const n = r_name.value.trim(); if(!n) return;
+        const code = Math.random().toString(36).substring(2,7).toUpperCase() + "-08";
+        await db.collection("rooms").doc(code).set({ name:n, admin:currentUser });
+        await db.collection("users").doc(currentUser).update({ rooms: firebase.firestore.FieldValue.arrayUnion(code) });
+        currentRoom = code; updateUI();
+    }
+
+    async function joinRoom() {
+        const c = r_code.value.trim().toUpperCase();
+        const r = await db.collection("rooms").doc(c).get();
+        if(!r.exists) return alert("Kod geçersiz!");
+        await db.collection("users").doc(currentUser).update({ rooms: firebase.firestore.FieldValue.arrayUnion(c) });
+        currentRoom = c; updateUI();
+    }
+
+    function renderCal() {
+        calendar.innerHTML = "";
+        const days = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+        for(let i=1; i<=days; i++) {
+            const d = document.createElement("div");
+            d.className = `day ${selectedDay === i ? 'active' : ''}`;
+            d.innerHTML = `<b>${i}</b>`;
+            d.onclick = () => { selectedDay = i; sel_date_label.innerText = i + " Tarihli Planlar"; task_inputs.style.display="block"; renderCal(); loadTasks(); };
+            calendar.appendChild(d);
         }
     }
 
     async function addTask() {
-        const txt = task_input.value.trim(); if(!txt || !currentRoom) return;
-        const days = parseInt(repeat_days.value) || 1;
-        const batch = db.batch();
-        for(let i=0; i<days; i++) {
-            let d = new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDay + i);
-            batch.set(db.collection("tasks").doc(), { room:currentRoom, text:txt, day:d.getDate(), month:d.getMonth(), year:d.getFullYear(), done:false });
-        }
-        await batch.commit(); task_input.value = ""; loadTasks(); renderCalendar();
+        const txt = t_input.value.trim(); if(!txt || !currentRoom) return;
+        await db.collection("tasks").add({ r:currentRoom, u:currentUser, t:txt, d:selectedDay, m:today.getMonth() });
+        t_input.value = ""; loadTasks();
     }
 
     async function loadTasks() {
-        const snap = await db.collection("tasks").where("room","==",currentRoom).where("day","==",selectedDay).where("month","==",viewDate.getMonth()).where("year","==",viewDate.getFullYear()).get();
-        let h = "";
-        snap.forEach(doc => {
-            const d = doc.data();
-            h += `<div style="display:flex; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:12px; margin-bottom:5px;">
-                <input type="checkbox" ${d.done?'checked':''} onchange="toggleTask('${doc.id}',${d.done})" style="width:18px; margin-right:10px;">
-                <span style="${d.done?'text-decoration:line-through;opacity:0.4':''}">${d.text}</span>
-                <b onclick="delTask('${doc.id}')" style="margin-left:auto; color:var(--red); cursor:pointer;">✕</b>
-            </div>`;
-        });
-        task_list.innerHTML = h || "Plan yok.";
+        const s = await db.collection("tasks").where("r","==",currentRoom).where("d","==",selectedDay).get();
+        t_list.innerHTML = "";
+        s.forEach(doc => { t_list.innerHTML += `<div style="padding:5px; border-bottom:1px solid #14532d">${doc.data().u}: ${doc.data().t}</div>`; });
     }
 
-    async function sendChatImg() {
-        const file = chat_file.files[0];
+    function sendMsg() {
+        const m = c_input.value.trim(); if(!m || !currentRoom) return;
+        db.collection("chats").doc(currentRoom).collection("m").add({ u:currentUser, t:m, time:Date.now() });
+        c_input.value = "";
+    }
+
+    function sendImg() {
+        const file = c_file.files[0];
         const reader = new FileReader();
-        reader.onloadend = async () => {
-            await db.collection("chats").doc(currentRoom).collection("messages").add({ user:currentUser, img:reader.result, time:firebase.firestore.FieldValue.serverTimestamp() });
+        reader.onload = async (e) => {
+            await db.collection("chats").doc(currentRoom).collection("m").add({ u:currentUser, img:e.target.result, time:Date.now() });
         };
         reader.readAsDataURL(file);
     }
 
     function startChat() {
-        if(chatListen) chatListen();
-        chatListen = db.collection("chats").doc(currentRoom).collection("messages").orderBy("time","asc").onSnapshot(s => {
-            chat_messages.innerHTML = "";
+        if(chatSub) chatSub();
+        chatSub = db.collection("chats").doc(currentRoom).collection("m").orderBy("time","asc").onSnapshot(s => {
+            chat_box.innerHTML = "";
             s.forEach(d => {
                 const m = d.data();
-                const imgHtml = m.img ? `<br><img src="${m.img}" class="chat-img" onclick="openImage('${m.img}')">` : '';
-                chat_messages.innerHTML += `<div><b>${m.user}:</b> ${m.text || ''} ${imgHtml}</div>`;
+                chat_box.innerHTML += `<div><b>${m.u}:</b> ${m.t || ''} ${m.img ? `<br><img src="${m.img}" class="chat-img" onclick="window.open(this.src)">` : ''}</div>`;
             });
-            chat_messages.scrollTop = chat_messages.scrollHeight;
+            chat_box.scrollTop = chat_box.scrollHeight;
         });
     }
 
-    async function sendMsg() {
-        const val = chat_input.value.trim(); if(!val) return;
-        await db.collection("chats").doc(currentRoom).collection("messages").add({ user:currentUser, text:val, time:firebase.firestore.FieldValue.serverTimestamp() });
-        chat_input.value = "";
-    }
-
-    async function createRoom() {
-        const n = new_room_name.value.trim(); if(!n) return;
-        const c = Math.random().toString(36).substring(2,8).toUpperCase() + "-08";
-        await db.collection("rooms").doc(c).set({ name: n, creator: currentUser });
-        await db.collection("users").doc(currentUser).update({ rooms: firebase.firestore.FieldValue.arrayUnion(c) });
-        currentRoom = c; new_room_name.value = ""; updateRoomBar(); renderCalendar();
-    }
-
-    async function joinRoom() {
-        const c = join_code.value.trim().toUpperCase();
-        const r = await db.collection("rooms").doc(c).get();
-        if(!r.exists) return alert("Oda yok!");
-        await db.collection("users").doc(currentUser).update({ rooms: firebase.firestore.FieldValue.arrayUnion(c) });
-        currentRoom = c; join_code.value = ""; updateRoomBar(); renderCalendar();
-    }
-
-    async function updateRoomBar() {
-        const u = await db.collection("users").doc(currentUser).get();
-        room_bar.innerHTML = "";
-        for(let rID of (u.data().rooms || [])) {
-            const rDoc = await db.collection("rooms").doc(rID).get();
-            if(rDoc.exists) {
-                const div = document.createElement("div");
-                div.className = `room-tab ${currentRoom === rID ? 'active' : ''}`;
-                div.innerText = `# ${rDoc.data().name}`;
-                div.onclick = () => { currentRoom = rID; updateRoomBar(); renderCalendar(); if(chatListen) startChat(); };
-                room_bar.appendChild(div);
-            }
-        }
+    async function deleteRoom() {
+        if(!confirm("Bu odayı tamamen silmek üzeresin. Geri dönüş yok!")) return;
+        await db.collection("rooms").doc(currentRoom).delete();
+        alert("Oda silindi. Sayfa yenileniyor...");
+        location.reload();
     }
 
     function switchSec(id, el) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.getElementById(id).classList.add('active'); el.classList.add('active');
-        if(id === 'chat_sec') startChat();
+        if(id === 'chat_sec' && currentRoom) startChat();
     }
 
-    async function toggleTask(id, s) { await db.collection("tasks").doc(id).update({ done: !s }); loadTasks(); renderCalendar(); }
-    async function delTask(id) { await db.collection("tasks").doc(id).delete(); loadTasks(); renderCalendar(); }
-    function changeMonth(n) { viewDate.setMonth(viewDate.getMonth() + n); selectedDay = null; renderCalendar(); }
-    async function updateMotto() { const m = prompt("Motto:"); if(m) { await db.collection("users").doc(currentUser).update({ motto: m }); my_motto.innerText = m; } }
-    async function uploadPfp() { const file = pfp_input.files[0]; const reader = new FileReader(); reader.onloadend = async () => { await db.collection("users").doc(currentUser).update({ pfp: reader.result }); user_pfp.src = reader.result; }; reader.readAsDataURL(file); }
     function logout() { localStorage.clear(); location.reload(); }
-
-    if(currentUser) initApp();
+    if(currentUser) init();
 </script>
 </body>
 </html>
