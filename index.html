@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>08 Takvim - Master</title>
+    <title>08 Takvim - Otonom V3</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -15,7 +15,7 @@
         #app { display: none; padding: 15px; max-width: 600px; margin: auto; padding-bottom: 100px; }
         
         .top-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(20, 83, 45, 0.4); padding: 12px; border-radius: 20px; border: 1px solid rgba(34, 197, 94, 0.3); backdrop-filter: blur(10px); }
-        .pfp-area { position: relative; width: 45px; height: 45px; cursor: pointer; }
+        .pfp-area { width: 45px; height: 45px; cursor: pointer; }
         .pfp { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--green); object-fit: cover; }
         
         .room-bar { display: flex; overflow-x: auto; padding: 10px 0; gap: 8px; scrollbar-width: none; }
@@ -31,16 +31,15 @@
 
         input, button { padding: 12px; border-radius: 12px; border: none; outline: none; width: 100%; }
         input { background: rgba(0,0,0,0.3); color: white; margin-bottom: 8px; border: 1px solid #14532d; }
-        button { font-weight: bold; cursor: pointer; }
+        button { font-weight: bold; cursor: pointer; transition: 0.2s; }
         
-        /* Üye Listesi Stili */
         .member-card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .motto-text { font-size: 10px; color: var(--accent); display: block; }
-        .admin-badge { background: var(--accent); color: #000; font-size: 8px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
         
         #chat_box { height: 350px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px; margin-bottom: 10px; border: 1px solid rgba(34,197,94,0.1); }
         .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .day { background: rgba(2, 44, 34, 0.6); padding: 8px; border-radius: 8px; min-height: 60px; text-align: center; cursor: pointer; border: 1px solid #14532d; font-size: 12px; }
+        .day { background: rgba(2, 44, 34, 0.6); padding: 8px; border-radius: 8px; min-height: 60px; text-align: center; cursor: pointer; border: 1px solid #14532d; font-size: 12px; position: relative; }
+        .day.has-task::after { content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
         .day.selected { border-color: white; background: rgba(34, 197, 94, 0.2); }
     </style>
 </head>
@@ -65,7 +64,7 @@
             </div>
             <div>
                 <b id="welcome_msg" style="text-transform: uppercase;">...</b>
-                <span id="my_motto_display" class="motto-text">Motto yükleniyor...</span>
+                <span id="my_motto_display" class="motto-text">...</span>
             </div>
         </div>
         <button onclick="logout()" style="background:var(--red); color:white; width:auto; padding:6px 12px; font-size:10px;">ÇIKIŞ</button>
@@ -80,11 +79,15 @@
     <div id="cal_sec" class="section active">
         <div id="room_bar" class="room-bar"></div>
         <div id="calendar" class="calendar"></div>
-        <div id="task_area" style="margin-top:20px; display:none">
-            <h4 id="sel_date_text" style="color:var(--accent)">Seçili Gün</h4>
-            <input id="t_input" placeholder="Plan ekle...">
-            <button onclick="saveTask()" style="background:var(--green); color:var(--dark)">KAYDET</button>
-            <div id="t_list" style="margin-top:15px;"></div>
+        <div id="task_area" style="margin-top:20px; display:none; background:rgba(0,0,0,0.2); padding:15px; border-radius:15px;">
+            <h4 id="sel_date_text" style="color:var(--accent); margin-top:0;">Seçili Gün</h4>
+            <input id="t_input" placeholder="Planın nedir?">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                <span style="font-size:11px; white-space:nowrap;">Kaç gün sürsün?</span>
+                <input id="t_days" type="number" value="1" min="1" max="31" style="margin:0; width:60px; text-align:center;">
+            </div>
+            <button onclick="saveTask()" style="background:var(--green); color:var(--dark)">PLAN EKLE</button>
+            <div id="t_list" style="margin-top:15px; max-height:200px; overflow-y:auto;"></div>
         </div>
     </div>
 
@@ -100,26 +103,23 @@
 
     <div id="room_sec" class="section">
         <div id="admin_only" style="display:none; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--red); padding: 15px; border-radius: 15px; margin-bottom: 20px;">
-            <h4 style="margin:0 0 10px 0; color:var(--red)">ADMİN ARAÇLARI</h4>
-            <p id="room_code_display" style="font-size:12px; opacity:0.8"></p>
-            <button onclick="deleteRoom()" style="background:var(--red); color:white; font-size:11px;">ODAYI TAMAMEN SİL</button>
+            <h4 style="margin:0 0 5px 0; color:var(--red)">ADMİN PANELİ</h4>
+            <p id="room_code_display" style="font-size:11px; margin-bottom:10px;"></p>
+            <button onclick="deleteRoom()" style="background:var(--red); color:white; font-size:11px; height:30px; padding:0;">ODAYI SİL</button>
         </div>
         
         <h4>Oda İşlemleri</h4>
-        <input id="r_name" placeholder="Oda Adı">
-        <button onclick="createRoom()" style="background:var(--green); margin-bottom:10px">YENİ ODA KUR</button>
-        <input id="r_code" placeholder="Katılım Kodu">
-        <button onclick="joinRoom()" style="background:var(--accent)">KODA KATIL</button>
+        <input id="r_name" placeholder="Yeni Oda Adı">
+        <button onclick="createRoom()" style="background:var(--green); margin-bottom:10px">KUR</button>
+        <input id="r_code" placeholder="Oda Kodu">
+        <button onclick="joinRoom()" style="background:var(--accent)">KATIL</button>
 
-        <div style="margin-top:20px;">
-            <h4>Odadaki Üyeler</h4>
-            <div id="member_list_box"></div>
-        </div>
+        <h4 style="margin-top:20px;">Üyeler</h4>
+        <div id="member_list_box"></div>
     </div>
 </div>
 
 <script>
-    // FIREBASE AYARLARI
     const firebaseConfig = {
         apiKey: "AIzaSyBG-J1wIOT3rLyYhiTKhusxJ2QuI_EQ17I",
         authDomain: "project-2699643977533108129.firebaseapp.com",
@@ -140,11 +140,11 @@
         const ref = db.collection("users").doc(u);
         const doc = await ref.get();
         if(type === 'reg') {
-            if(doc.exists) return alert("Bu isim alınmış!");
-            await ref.set({ pass:p, rooms:[], pfp:"", motto:"08 Takvim Üyesi" });
-            alert("Kayıt başarılı!");
+            if(doc.exists) return alert("Alınmış isim!");
+            await ref.set({ pass:p, rooms:[], pfp:"", motto:"08 Üyesi" });
+            alert("Kayıt ok!");
         } else {
-            if(!doc.exists || doc.data().pass !== p) return alert("Hatalı giriş!");
+            if(!doc.exists || doc.data().pass !== p) return alert("Hatalı!");
         }
         currentUser = u; localStorage.setItem('08_u', u); init();
     }
@@ -154,21 +154,9 @@
         welcome_msg.innerText = currentUser;
         const u = await db.collection("users").doc(currentUser).get();
         if(u.data().pfp) user_pfp.src = u.data().pfp;
-        my_motto_display.innerText = u.data().motto || "Motto yok";
+        my_motto_display.innerText = u.data().motto || "";
         currentRoom = u.data().rooms[0] || null;
         loadRooms();
-    }
-
-    async function updateProfile() {
-        const action = confirm("Profil fotoğrafı için Tamam, Motto için İptal basın.");
-        if(action) document.getElementById('pfp_in').click();
-        else {
-            const newMotto = prompt("Yeni mottonuz:");
-            if(newMotto) {
-                await db.collection("users").doc(currentUser).update({ motto: newMotto });
-                my_motto_display.innerText = newMotto;
-            }
-        }
     }
 
     async function loadRooms() {
@@ -190,6 +178,15 @@
         if(currentRoom) startChat();
     }
 
+    async function checkAdmin() {
+        if(!currentRoom) return;
+        const r = await db.collection("rooms").doc(currentRoom).get();
+        if(r.exists && r.data().admin === currentUser) {
+            admin_only.style.display = "block";
+            room_code_display.innerText = "Kod: " + currentRoom;
+        } else admin_only.style.display = "none";
+    }
+
     async function loadMembers() {
         if(!currentRoom) return;
         const snap = await db.collection("users").where("rooms", "array-contains", currentRoom).get();
@@ -199,75 +196,83 @@
         
         snap.forEach(doc => {
             const isMeAdmin = (adminID === currentUser);
-            const isThisMemberAdmin = (adminID === doc.id);
-            
-            let adminButtons = "";
-            if(isMeAdmin && !isThisMemberAdmin) {
-                adminButtons = `
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="kickUser('${doc.id}')" style="background:var(--red); padding:5px 8px; width:auto; font-size:10px;">AT</button>
-                        <button onclick="giveAdmin('${doc.id}')" style="background:var(--accent); color:#000; padding:5px 8px; width:auto; font-size:10px;">YETKİ VER</button>
-                    </div>
-                `;
+            const isAdmin = (adminID === doc.id);
+            let btns = "";
+            if(isMeAdmin && !isAdmin) {
+                btns = `<div style="display:flex; gap:4px;">
+                    <button onclick="kick('${doc.id}')" style="background:var(--red); padding:4px 8px; width:auto; font-size:9px;">AT</button>
+                    <button onclick="give('${doc.id}')" style="background:var(--accent); color:#000; padding:4px 8px; width:auto; font-size:9px;">DEVRET</button>
+                </div>`;
             }
-
-            member_list_box.innerHTML += `
-                <div class="member-card">
-                    <div>
-                        <b>${doc.id}</b> ${isThisMemberAdmin ? '<span class="admin-badge">ADMİN</span>' : ''}
-                        <span class="motto-text">${doc.data().motto || ''}</span>
-                    </div>
-                    ${adminButtons}
-                </div>
-            `;
+            member_list_box.innerHTML += `<div class="member-card">
+                <div><b>${doc.id}</b> ${isAdmin?'(Admin)':''}<br><small class="motto-text">${doc.data().motto||''}</small></div>
+                ${btns}
+            </div>`;
         });
     }
 
-    async function kickUser(targetID) {
-        if(!confirm(`${targetID} adlı kullanıcıyı odadan atmak istediğine emin misin?`)) return;
-        await db.collection("users").doc(targetID).update({
-            rooms: firebase.firestore.FieldValue.arrayRemove(currentRoom)
-        });
-        alert("Kullanıcı atıldı."); loadMembers();
+    async function kick(id) { 
+        if(confirm("Atılsın mı?")) {
+            await db.collection("users").doc(id).update({ rooms: firebase.firestore.FieldValue.arrayRemove(currentRoom) });
+            loadMembers();
+        }
     }
-
-    async function giveAdmin(targetID) {
-        if(!confirm(`Yönetimi ${targetID} kişisine devrediyorsun. Onaylıyor musun?`)) return;
-        await db.collection("rooms").doc(currentRoom).update({ admin: targetID });
-        alert("Yetki devredildi."); loadRooms();
-    }
-
-    async function checkAdmin() {
-        if(!currentRoom) return;
-        const r = await db.collection("rooms").doc(currentRoom).get();
-        if(r.exists && r.data().admin === currentUser) {
-            admin_only.style.display = "block";
-            room_code_display.innerText = "Davet Kodun: " + currentRoom;
-        } else admin_only.style.display = "none";
+    async function give(id) { 
+        if(confirm("Adminliği devret?")) {
+            await db.collection("rooms").doc(currentRoom).update({ admin: id });
+            loadRooms();
+        }
     }
 
     function renderCal() {
         calendar.innerHTML = "";
-        const last = new Date(2026, new Date().getMonth()+1, 0).getDate();
-        for(let i=1; i<=last; i++) {
+        const daysInMonth = new Date(2026, 1, 0).getDate();
+        for(let i=1; i<=daysInMonth; i++) {
             const d = document.createElement("div");
             d.className = `day ${selectedDay === i ? 'selected' : ''}`;
             d.innerHTML = `<b>${i}</b>`;
-            d.onclick = () => { selectedDay = i; task_area.style.display="block"; sel_date_text.innerText = i + " Ocak 2026"; renderCal(); loadTasks(); };
+            d.onclick = () => { 
+                selectedDay = i; 
+                task_area.style.display="block"; 
+                sel_date_text.innerText = i + " Ocak 2026"; 
+                renderCal(); 
+                loadTasks(); 
+            };
             calendar.appendChild(d);
         }
     }
 
     async function saveTask() {
-        const t = t_input.value.trim(); if(!t || !currentRoom) return;
-        await db.collection("tasks").add({ r:currentRoom, u:currentUser, t:t, d:selectedDay, time:Date.now() });
-        t_input.value = ""; loadTasks();
+        const text = t_input.value.trim();
+        const count = parseInt(t_days.value) || 1;
+        if(!text || !currentRoom || !selectedDay) return;
+
+        const batch = db.batch();
+        for(let i=0; i < count; i++) {
+            let targetDay = selectedDay + i;
+            if(targetDay > 31) break;
+            const newRef = db.collection("tasks").doc();
+            batch.set(newRef, { r: currentRoom, u: currentUser, t: text, d: targetDay, time: Date.now() });
+        }
+        await batch.commit();
+        t_input.value = ""; t_days.value = "1";
+        loadTasks();
     }
 
     async function loadTasks() {
         const s = await db.collection("tasks").where("r","==",currentRoom).where("d","==",selectedDay).get();
         t_list.innerHTML = "";
-        s.forEach(doc => { t_list.innerHTML += `<div style="border-bottom:1px solid #14532d; padding:5px;"><b>${doc.data().u}:</b> ${doc.data().t}</div>`; });
+        s.forEach(doc => {
+            t_list.innerHTML += `<div style="padding:8px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:5px; font-size:12px; display:flex; justify-content:space-between;">
+                <span><b>${doc.data().u}:</b> ${doc.data().t}</span>
+                <span onclick="deleteTask('${doc.id}')" style="color:var(--red); cursor:pointer;">✕</span>
+            </div>`;
+        });
+    }
+
+    async function deleteTask(id) {
+        await db.collection("tasks").doc(id).delete();
+        loadTasks();
     }
 
     function startChat() {
@@ -307,7 +312,7 @@
     async function joinRoom() {
         const c = r_code.value.trim().toUpperCase();
         const r = await db.collection("rooms").doc(c).get();
-        if(!r.exists) return alert("Kod geçersiz!");
+        if(!r.exists) return alert("Hatalı kod!");
         await db.collection("users").doc(currentUser).update({ rooms: firebase.firestore.FieldValue.arrayUnion(c) });
         currentRoom = c; loadRooms();
     }
@@ -321,6 +326,18 @@
         r.readAsDataURL(f);
     }
 
+    async function updateProfile() {
+        const action = confirm("Fotoğraf için TAMAM, Motto için İPTAL basın.");
+        if(action) document.getElementById('pfp_in').click();
+        else {
+            const nm = prompt("Yeni motto:");
+            if(nm) {
+                await db.collection("users").doc(currentUser).update({ motto: nm });
+                my_motto_display.innerText = nm;
+            }
+        }
+    }
+
     function switchSec(id, el) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -329,9 +346,10 @@
     }
 
     async function deleteRoom() {
-        if(!confirm("Dikkat! Oda ve tüm mesajlar silinecek. Onaylıyor musun?")) return;
-        await db.collection("rooms").doc(currentRoom).delete();
-        location.reload();
+        if(confirm("Tüm oda silinsin mi?")) {
+            await db.collection("rooms").doc(currentRoom).delete();
+            location.reload();
+        }
     }
 
     function logout() { localStorage.clear(); location.reload(); }
